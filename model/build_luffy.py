@@ -8,7 +8,7 @@ The GLB contains only the character meshes, not the camera, lights or backdrop.
 import math
 import os
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -148,25 +148,31 @@ limb('Neck',(0,0,1.18),(0,0,1.32),.065,.066,'skin')
 for s in (-1,1):
     tube('Clavicle',[(s*.015,-.091,1.19),(s*.075,-.102,1.18),(s*.14,-.084,1.19)],.003,'skin_shadow')
     tube('Chest contour',[(s*.02,-.105,1.095),(s*.075,-.106,1.083),(s*.13,-.085,1.10)],.0025,'skin_shadow')
-tube('Chest scar A',[(-.070,-.108,1.14),(0,-.113,1.065),(.063,-.105,1.00)],.006,'scar')
-tube('Chest scar B',[(.070,-.108,1.14),(0,-.114,1.065),(-.063,-.105,1.00)],.006,'scar')
+tube('Chest scar A',[(-.078,-.101,1.14),(-.051,-.108,1.12),(-.045,-.112,1.10),(-.025,-.114,1.09),(-.02,-.116,1.075),(0,-.116,1.065),(.025,-.115,1.045),(.033,-.111,1.025),(.065,-.102,1.00)],.004,'scar')
+tube('Chest scar B',[(.078,-.101,1.14),(.050,-.108,1.12),(.045,-.112,1.10),(.023,-.114,1.09),(.018,-.116,1.075),(0,-.117,1.065),(-.025,-.115,1.045),(-.033,-.111,1.025),(-.065,-.102,1.00)],.004,'scar')
 # Sculpted open jacket panels, with a clear V-shaped opening and lapels.
 for s,label in [(-1,'L'),(1,'R')]:
     panel=[(s*.20,-.025,1.22),(s*.145,-.093,1.20),(s*.085,-.111,1.10),(s*.075,-.103,.93),(s*.115,-.085,.80),(s*.185,-.055,.79),(s*.20,-.02,.96),(s*.235,-.01,1.13)]
     patch('Jacket front '+label,panel,'red')
     tube('Jacket opening piping '+label,[(s*.145,-.098,1.20),(s*.088,-.116,1.10),(s*.078,-.108,.94),(s*.116,-.090,.80)],.006,'red_light')
     patch('Collar '+label,[(s*.20,-.03,1.23),(s*.14,-.095,1.23),(s*.065,-.11,1.16),(s*.105,-.12,1.13),(s*.16,-.105,1.17)],'red')
-    for z in (.84,.91,.98,1.05):
-        uv('Brass button '+label,(s*.129,-.106,z),(.010,.006,.010),'gold',16,10)
-    # Arms angle outward slightly; sleeves end at the elbow.
-    limb('Upper sleeve '+label,(s*.205,.005,1.17),(s*.27,.005,.96),.083,.071,'red')
-    uv('Shoulder '+label,(s*.205,.005,1.155),(.085,.09,.085),'red')
-    limb('Sleeve cuff '+label,(s*.27,.005,.965),(s*.279,.005,.92),.076,.078,'red_dark')
-    limb('Forearm '+label,(s*.28,.005,.93),(s*.315,-.012,.73),.052,.043,'skin')
-    uv('Hand '+label,(s*.32,-.014,.70),(.056,.046,.066),'skin')
-    uv('Thumb '+label,(s*.275,-.050,.70),(.024,.026,.038),'skin_light',20,12)
-    for j in range(3):
-        tube('Knuckle '+label,[(s*(.29+j*.018),-.055,.704),(s*(.29+j*.018),-.056,.682)],.002,'skin_shadow')
+    if s == -1:
+        for z in (.84,.91,.98,1.05):
+            uv('Brass button '+label,(s*.129,-.112,z),(.009,.005,.012),'gold',16,10)
+    # One raised arm, as in the reference; the other falls naturally at the side.
+    if s == -1:
+        limb('Raised sleeve',(-.205,.005,1.17),(-.36,.015,1.34),.075,.065,'red')
+        uv('Raised shoulder',(-.21,.005,1.17),(.075,.075,.075),'red')
+        limb('Raised forearm',(-.36,.015,1.34),(-.43,.025,1.58),.050,.042,'skin')
+        uv('Elbow',(-.36,.015,1.34),(.05,.05,.05),'skin')
+        limb('Raised upper arm',(-.43,.025,1.58),(-.17,.04,1.61),.042,.038,'skin')
+        uv('Raised hand',(-.16,.04,1.61),(.055,.042,.035),'skin')
+    else:
+        limb('Upper sleeve '+label,(.205,.005,1.17),(.27,.005,.96),.075,.065,'red')
+        uv('Shoulder '+label,(.205,.005,1.155),(.075,.075,.075),'red')
+        limb('Forearm '+label,(.27,.005,.96),(.30,-.012,.73),.047,.036,'skin')
+        uv('Hand '+label,(.30,-.014,.70),(.045,.037,.059),'skin')
+        uv('Thumb '+label,(.264,-.045,.70),(.018,.020,.031),'skin',20,12)
 
 # Wide wrapped sash with a knot and two hanging fabric ends.
 loft('Sash',[(.76,0,0,.168,.107),(.78,0,0,.18,.115),(.84,0,0,.18,.115),(.86,0,0,.17,.11)], 'sash')
@@ -177,6 +183,7 @@ patch('Sash hanging end',[(.16,-.105,.79),(.22,-.09,.77),(.25,-.085,.55),(.19,-.
 patch('Sash second end',[(.17,-.08,.78),(.22,-.065,.77),(.19,-.055,.63),(.15,-.065,.61)],'sash_dark')
 
 # HEAD: exposed face, expressive linework, eyes and the small scar below his left eye.
+head_start = set(bpy.data.objects)
 uv('Head',(0,0,1.42),(.175,.145,.195),'skin_light',48,32)
 for s,label in [(-1,'L'),(1,'R')]:
     uv('Ear '+label,(s*.174,0,1.42),(.035,.026,.052),'skin',24,16)
@@ -204,7 +211,14 @@ for x in (-.115,-.065,-.015,.035,.085,.13):
     tipx=x+.025
     patch('Fringe',[(x-.033,-.117,1.60),(x+.032,-.117,1.60),(tipx,-.142,1.525+abs(x)*.08)],'hair',.009)
 
+# Scale the face and hair together: a leaner anime silhouette, rather than a toy head.
+head_objects = set(bpy.data.objects) - head_start
+head_transform = Matrix.Translation((0,0,1.42)) @ Matrix.Diagonal((.83,.88,.88,1)) @ Matrix.Translation((0,0,-1.42))
+for obj in head_objects:
+    obj.matrix_world = head_transform @ obj.matrix_world
+
 # STRAW HAT: domed crown, narrow rolled brim, woven concentric lines.
+hat_start = set(bpy.data.objects)
 loft('Hat brim',[(1.585,0,.012,.285,.255),(1.595,0,.012,.30,.27),(1.606,0,.012,.285,.255)],'straw',64)
 loft('Hat crown',[(1.60,0,.012,.17,.155),(1.66,0,.012,.17,.155),(1.71,0,.012,.16,.145),(1.75,0,.012,.13,.12),(1.77,0,.012,.07,.065),(1.775,0,.012,.005,.005)],'straw',64)
 loft('Hat red ribbon',[(1.606,0,.012,.173,.158),(1.65,0,.012,.173,.158)],'band',64)
@@ -214,6 +228,13 @@ for rx in (.20,.23,.26,.282):
 for z,rx,ry in [(1.66,.171,.156),(1.685,.166,.151),(1.71,.16,.145),(1.735,.146,.133)]:
     pts=[(rx*math.cos(a),.012+ry*math.sin(a),z) for a in [i*2*math.pi/64 for i in range(65)]]
     tube('Crown weave',pts,.0014,'straw_light',2)
+
+# Tilt the hat behind the head, exposing the fringe and framing the face.
+hat_objects = set(bpy.data.objects) - hat_start
+hat_transform = (Matrix.Translation((0,.115,1.49)) @ Matrix.Rotation(math.radians(65),4,'X')
+                 @ Matrix.Translation((0,0,-1.60)))
+for obj in hat_objects:
+    obj.matrix_world = hat_transform @ obj.matrix_world
 
 # Studio setup. Only meshes parented to root are exported.
 world=bpy.data.worlds.new('Studio'); world.use_nodes=True
@@ -228,8 +249,8 @@ def area(name, loc, energy, size, target):
 area('Key softbox',(-3,-4,5),450,4,(0,0,.9))
 area('Fill softbox',(3,-2,2.8),250,3,(0,0,1))
 area('Rim softbox',(1,3,3.5),500,3,(0,0,1))
-bpy.ops.object.camera_add(location=(.45,-5.5,2.05))
-cam=bpy.context.object; cam.name='Camera'; cam.rotation_euler=(Vector((0,0,.91))-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.type='ORTHO'; cam.data.ortho_scale=2.15
+bpy.ops.object.camera_add(location=(.15,-5.5,1.55))
+cam=bpy.context.object; cam.name='Camera'; cam.rotation_euler=(Vector((0,0,.91))-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.type='ORTHO'; cam.data.ortho_scale=2.05
 scene=bpy.context.scene; scene.camera=cam
 scene.render.engine='CYCLES'; scene.cycles.samples=48
 scene.cycles.use_denoising=True
