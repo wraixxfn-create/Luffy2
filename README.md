@@ -2,6 +2,8 @@
 
 Modello 3D stilizzato di Monkey D. Luffy dopo il timeskip, in posa statica.
 
+**Nota:** lo script è stato aggiornato con una posa ispirata al riferimento, ma i file `.blend`, `.glb` e l’anteprima presenti nel repository non sono ancora stati rigenerati e mostrano la versione precedente. Esegui il comando qui sotto in un ambiente Blender funzionante per aggiornarli.
+
 - [`model/luffy.blend`](model/luffy.blend): scena modificabile con materiali, luci e camera.
 - [`model/luffy.glb`](model/luffy.glb): personaggio esportato in glTF 2.0; non include luci o camera.
 - [`model/preview.png`](model/preview.png): render di anteprima.
